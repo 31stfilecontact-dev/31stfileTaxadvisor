@@ -3,13 +3,17 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Preliminary Indian direct-tax authority research API for 31stFile.
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: research
+    description: Section, issue, case-law, and circular research
+  - name: admin
+    description: Password-protected curation tools
 paths:
   /healthz:
     get:
@@ -24,6 +28,380 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /sections:
+    get:
+      operationId: listSections
+      tags: [research]
+      summary: List sections for an Act
+      parameters:
+        - name: act
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [1961, 2025]
+      responses:
+        "200":
+          description: Sections in the selected Act
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Section"
+  /mapping:
+    get:
+      operationId: getSectionMappings
+      tags: [research]
+      summary: Find official mappings for a section
+      parameters:
+        - name: section_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Official section correspondence records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SectionMapping"
+  /issues:
+    get:
+      operationId: listIssues
+      tags: [research]
+      summary: List approved issues for a section
+      parameters:
+        - name: section_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Approved issues attached to the section
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Issue"
+  /circulars:
+    get:
+      operationId: listCirculars
+      tags: [research]
+      summary: List circulars and related authorities
+      parameters:
+        - name: section_id
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: issue_id
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Matching circulars and related authorities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Circular"
+  /search:
+    post:
+      operationId: searchAuthorities
+      tags: [research]
+      summary: Retrieve case law and circulars for preliminary review
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SearchInput"
+      responses:
+        "200":
+          description: Retrieved cases and circulars
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchResult"
+        "400":
+          description: Invalid search request
+        "401":
+          description: Kanoon API token was rejected
+        "403":
+          description: Kanoon denied access to search or document retrieval
+        "429":
+          description: Kanoon rate limit reached
+        "502":
+          description: Kanoon API request failed
+        "503":
+          description: Required API or database configuration is missing
+  /admin/login:
+    post:
+      operationId: adminLogin
+      tags: [admin]
+      summary: Verify the curation password and start an HTTP-only session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminLoginInput"
+      responses:
+        "200":
+          description: Admin session started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSessionOut"
+        "401":
+          description: Admin password is incorrect
+        "503":
+          description: Admin password or session signing is not configured
+  /admin/logout:
+    post:
+      operationId: adminLogout
+      tags: [admin]
+      summary: Clear the current admin session
+      responses:
+        "204":
+          description: Admin session cleared
+  /admin/session:
+    get:
+      operationId: adminSession
+      tags: [admin]
+      summary: Check the current admin session
+      responses:
+        "200":
+          description: Admin session is valid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSessionOut"
+        "401":
+          description: Admin session is missing or expired
+        "503":
+          description: Admin session is not configured
+  /admin/sections:
+    get:
+      operationId: adminListSections
+      tags: [admin]
+      summary: List all sections for review
+      responses:
+        "200":
+          description: All sections
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Section"
+        "401":
+          description: Admin password is missing or incorrect
+    patch:
+      operationId: adminUpdateSection
+      tags: [admin]
+      summary: Correct section details
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SectionUpdate"
+      responses:
+        "200":
+          description: Updated section
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Section"
+        "401":
+          description: Admin password is missing or incorrect
+  /admin/mappings:
+    get:
+      operationId: adminListMappings
+      tags: [admin]
+      summary: List all section mappings for review
+      responses:
+        "200":
+          description: All section mappings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SectionMapping"
+        "401":
+          description: Admin password is missing or incorrect
+    post:
+      operationId: adminCreateMapping
+      tags: [admin]
+      summary: Add an official section mapping
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MappingInput"
+      responses:
+        "201":
+          description: Created mapping
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SectionMapping"
+        "401":
+          description: Admin password is missing or incorrect
+  /admin/mappings/{mapping_id}:
+    patch:
+      operationId: adminUpdateMapping
+      tags: [admin]
+      summary: Correct an official section mapping
+      parameters:
+        - name: mapping_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MappingInput"
+      responses:
+        "200":
+          description: Updated mapping
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SectionMapping"
+        "401":
+          description: Admin password is missing or incorrect
+    delete:
+      operationId: adminDeleteMapping
+      tags: [admin]
+      summary: Remove an incorrect mapping
+      parameters:
+        - name: mapping_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Mapping removed
+        "401":
+          description: Admin password is missing or incorrect
+  /admin/issues:
+    get:
+      operationId: adminListIssues
+      tags: [admin]
+      summary: List issues including suggested and rejected issues
+      responses:
+        "200":
+          description: All issues
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Issue"
+        "401":
+          description: Admin password is missing or incorrect
+    post:
+      operationId: adminCreateIssue
+      tags: [admin]
+      summary: Add an issue and its search keywords
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IssueInput"
+      responses:
+        "201":
+          description: Created issue
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Issue"
+        "401":
+          description: Admin password is missing or incorrect
+  /admin/issues/{issue_id}:
+    patch:
+      operationId: adminUpdateIssue
+      tags: [admin]
+      summary: Edit issue details and its Kanoon keywords
+      parameters:
+        - name: issue_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IssueInput"
+      responses:
+        "200":
+          description: Updated issue
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Issue"
+        "401":
+          description: Admin password is missing or incorrect
+  /admin/issues/{issue_id}/approve:
+    post:
+      operationId: adminApproveIssue
+      tags: [admin]
+      summary: Approve a curated issue for research
+      parameters:
+        - name: issue_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Approved issue
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Issue"
+        "401":
+          description: Admin password is missing or incorrect
+  /admin/issues/{issue_id}/reject:
+    post:
+      operationId: adminRejectIssue
+      tags: [admin]
+      summary: Reject an issue from research
+      parameters:
+        - name: issue_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Rejected issue
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Issue"
+        "401":
+          description: Admin password is missing or incorrect
 components:
   schemas:
     HealthStatus:
@@ -33,4 +411,184 @@ components:
           type: string
       required:
         - status
+    Section:
+      type: object
+      properties:
+        id: { type: string }
+        act_id: { type: string }
+        act_year: { type: integer, enum: [1961, 2025] }
+        chapter: { type: ["string", "null"] }
+        number: { type: string }
+        title: { type: string }
+        text: { type: ["string", "null"] }
+        parent_id: { type: ["string", "null"] }
+      required: [id, act_id, act_year, chapter, number, title, text, parent_id]
+    SectionSummary:
+      type: object
+      properties:
+        id: { type: string }
+        act_id: { type: string }
+        act_year: { type: integer, enum: [1961, 2025] }
+        number: { type: string }
+        title: { type: string }
+      required: [id, act_id, act_year, number, title]
+    SectionMapping:
+      type: object
+      properties:
+        id: { type: string }
+        old_section_id: { type: ["string", "null"] }
+        new_section_id: { type: ["string", "null"] }
+        relation:
+          type: string
+          enum: [one_to_one, one_to_many, many_to_one, merged, omitted, new]
+        notes: { type: ["string", "null"] }
+        source_ref: { type: ["string", "null"] }
+        old_section:
+          oneOf:
+            - $ref: "#/components/schemas/SectionSummary"
+            - type: "null"
+        new_section:
+          oneOf:
+            - $ref: "#/components/schemas/SectionSummary"
+            - type: "null"
+      required: [id, old_section_id, new_section_id, relation, notes, source_ref, old_section, new_section]
+    Issue:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        kanoon_keywords:
+          type: array
+          items: { type: string }
+        tier: { type: integer }
+        status:
+          type: string
+          enum: [curated, suggested, approved, rejected]
+        section_ids:
+          type: array
+          items: { type: string }
+      required: [id, name, kanoon_keywords, tier, status, section_ids]
+    Circular:
+      type: object
+      properties:
+        id: { type: string }
+        act_year: { type: integer, enum: [1961, 2025] }
+        type:
+          type: string
+          enum: [circular, notification, instruction, clarification, aar, dtaa]
+        number: { type: ["string", "null"] }
+        date: { type: ["string", "null"], format: date }
+        section_id: { type: ["string", "null"] }
+        issue_id: { type: ["string", "null"] }
+        summary: { type: string }
+        effect:
+          type: string
+          enum: [favourable, adverse, neutral]
+        status:
+          type: string
+          enum: [active, withdrawn, superseded, saved_under_2025]
+        applicable_from: { type: ["string", "null"], format: date }
+        source_url: { type: ["string", "null"], format: uri }
+      required: [id, act_year, type, number, date, section_id, issue_id, summary, effect, status, applicable_from, source_url]
+    CaseResult:
+      type: object
+      properties:
+        doc_id: { type: string }
+        title: { type: string }
+        court: { type: ["string", "null"] }
+        bench: { type: ["string", "null"] }
+        date: { type: ["string", "null"], format: date }
+        cited_sections:
+          type: array
+          items: { type: string }
+        status:
+          oneOf:
+            - type: string
+              enum: [good, reversed, stayed, overruled]
+            - type: "null"
+        source_url: { type: ["string", "null"], format: uri }
+        doctype: { type: string }
+      required: [doc_id, title, court, bench, date, cited_sections, status, source_url, doctype]
+    SearchInput:
+      type: object
+      properties:
+        section_id: { type: string }
+        issue_id: { type: ["string", "null"] }
+        other_issue: { type: ["string", "null"] }
+        facts: { type: string, minLength: 1, maxLength: 12000 }
+        assessment_year: { type: ["string", "null"] }
+        manual_section_ids:
+          type: array
+          items: { type: string }
+        manual_override: { type: boolean, default: false }
+      required: [section_id, facts, manual_section_ids, manual_override]
+    SearchResult:
+      type: object
+      properties:
+        cases:
+          type: array
+          items: { $ref: "#/components/schemas/CaseResult" }
+        circulars:
+          type: array
+          items: { $ref: "#/components/schemas/Circular" }
+        query_displays:
+          type: array
+          items: { type: string }
+        warnings:
+          type: array
+          items: { type: string }
+        kanoon_calls: { type: integer }
+      required: [cases, circulars, query_displays, warnings, kanoon_calls]
+    SectionUpdate:
+      type: object
+      properties:
+        id: { type: string }
+        act_id: { type: string }
+        act_year: { type: integer, enum: [1961, 2025] }
+        chapter: { type: ["string", "null"] }
+        number: { type: string }
+        title: { type: string }
+        text: { type: ["string", "null"] }
+        parent_id: { type: ["string", "null"] }
+      required: [id, act_id, act_year, chapter, number, title, text, parent_id]
+    AdminLoginInput:
+      type: object
+      properties:
+        password:
+          type: string
+          minLength: 1
+          maxLength: 512
+          writeOnly: true
+      required: [password]
+    AdminSessionOut:
+      type: object
+      properties:
+        authenticated: { type: boolean }
+      required: [authenticated]
+    MappingInput:
+      type: object
+      properties:
+        old_section_id: { type: ["string", "null"] }
+        new_section_id: { type: ["string", "null"] }
+        relation:
+          type: string
+          enum: [one_to_one, one_to_many, many_to_one, merged, omitted, new]
+        notes: { type: ["string", "null"] }
+        source_ref: { type: ["string", "null"] }
+      required: [old_section_id, new_section_id, relation, notes, source_ref]
+    IssueInput:
+      type: object
+      properties:
+        name: { type: string, minLength: 1 }
+        kanoon_keywords:
+          type: array
+          items: { type: string, minLength: 1 }
+        tier: { type: integer, minimum: 1, maximum: 5 }
+        status:
+          type: string
+          enum: [curated, suggested, approved, rejected]
+        section_ids:
+          type: array
+          items: { type: string }
+      required: [name, kanoon_keywords, tier, status, section_ids]
 

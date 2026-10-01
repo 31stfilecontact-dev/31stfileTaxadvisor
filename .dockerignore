@@ -1,0 +1,9 @@
+.git
+.pythonlibs
+.venv
+node_modules
+artifacts
+attached_assets
+.env
+*.pyc
+__pycache__

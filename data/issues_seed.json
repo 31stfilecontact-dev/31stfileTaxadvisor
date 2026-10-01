@@ -1,0 +1,18 @@
+[
+  {
+    "id": "software-as-royalty",
+    "name": "Software as royalty",
+    "kanoon_keywords": ["Software as royalty"],
+    "tier": 1,
+    "status": "approved",
+    "section_number_old": "9(1)(vi)"
+  },
+  {
+    "id": "fts-under-dtaa",
+    "name": "FTS under DTAA",
+    "kanoon_keywords": ["FTS under DTAA"],
+    "tier": 1,
+    "status": "approved",
+    "section_number_old": "9(1)(vi)"
+  }
+]

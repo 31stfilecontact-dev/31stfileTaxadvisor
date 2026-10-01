@@ -1,0 +1,1 @@
+"""Draft note generation placeholder for a later build prompt."""

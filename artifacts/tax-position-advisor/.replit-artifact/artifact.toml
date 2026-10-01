@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "31stFile Tax Position Advisor"
+description = "A preliminary Indian direct-tax research workflow that maps provisions between the Income-tax Acts, collects anonymized facts, and retrieves linked cases and circulars without presenting a certified advisory."
+version = "1.0.0"
+id = "artifacts/tax-position-advisor"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24965
+
+[services.development]
+run = "pnpm --filter @workspace/tax-position-advisor run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/tax-position-advisor", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/tax-position-advisor/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24965"
+BASE_PATH = "/"
