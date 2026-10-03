@@ -12,7 +12,7 @@ Preliminary Indian direct-tax authority research with an explicit non-advisory d
 - `uv run --project . python scripts/seed.py` — import the supplied official data files.
 - `uv run --project . python scripts/validate_map.py` — list sections without an imported correspondence.
 
-Set `NEON_DATABASE_URL`, `KANOON_API_TOKEN`, and `ADMIN_PASSWORD` as server-side environment values. Use `NEON_DATABASE_URL` for the external Neon connection in every environment; the API intentionally ignores `DATABASE_URL` so it cannot point at Replit-managed storage. `GEMINI_API_KEY` is reserved for later prompts and is unused here.
+Set `NEON_DATABASE_URL`, `KANOON_API_TOKEN`, `ADMIN_PASSWORD`, and `SESSION_SECRET` as server-side environment values. Use `NEON_DATABASE_URL` for the external Neon connection in every environment; the API intentionally ignores `DATABASE_URL` so it cannot point at Replit-managed storage. The admin password is only used to establish a short-lived HTTP-only session cookie and must never be persisted in browser storage. `GEMINI_API_KEY` is reserved for later prompts and is unused here.
 
 ## Stack
 

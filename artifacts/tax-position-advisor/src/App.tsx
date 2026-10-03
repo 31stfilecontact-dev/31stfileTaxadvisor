@@ -7,6 +7,7 @@ import NotFound from '@/pages/not-found';
 import { Link, Route, Router as WouterRouter, Switch, useLocation } from 'wouter';
 import {
   useAdminApproveIssue, useAdminCreateIssue, useAdminCreateMapping, useAdminDeleteMapping,
+  useAdminLogin, useAdminLogout, useAdminSession,
   useAdminListIssues, useAdminListMappings, useAdminListSections, useAdminRejectIssue,
   useAdminUpdateIssue, useAdminUpdateMapping, useAdminUpdateSection,
   useGetSectionMappings, useListCirculars, useListIssues, useListSections, useSearchAuthorities,
@@ -274,7 +275,6 @@ function DebugPage() {
 }
 
 function AdminPage() {
-  const [password, setPassword] = useState(() => sessionStorage.getItem('tax-admin-password') || '');
   const [draftPassword, setDraftPassword] = useState('');
   const [tab, setTab] = useState<'sections' | 'mappings' | 'issues'>('sections');
   const [adminError, setAdminError] = useState('');
@@ -285,27 +285,51 @@ function AdminPage() {
   const [issueEdit, setIssueEdit] = useState<Issue | null>(null);
   const [issueOpen, setIssueOpen] = useState(false);
   const [issueForm, setIssueForm] = useState<IssueInput>({ name: '', kanoon_keywords: [], tier: 1, status: 'curated', section_ids: [] });
-  const authHeaders = useMemo(() => ({ 'X-Admin-Password': password }), [password]);
-  const queryConfig = { enabled: !!password, queryKey: ['/api/admin/sections', password] as const };
-  const sectionsQ = useAdminListSections({ query: queryConfig, request: { headers: authHeaders } });
-  const mappingsQ = useAdminListMappings({ query: { ...queryConfig, queryKey: ['/api/admin/mappings', password] }, request: { headers: authHeaders } });
-  const issuesQ = useAdminListIssues({ query: { ...queryConfig, queryKey: ['/api/admin/issues', password] }, request: { headers: authHeaders } });
-  const updateSection = useAdminUpdateSection({ request: { headers: authHeaders } });
-  const createMapping = useAdminCreateMapping({ request: { headers: authHeaders } });
-  const updateMapping = useAdminUpdateMapping({ request: { headers: authHeaders } });
-  const deleteMapping = useAdminDeleteMapping({ request: { headers: authHeaders } });
-  const createIssue = useAdminCreateIssue({ request: { headers: authHeaders } });
-  const updateIssue = useAdminUpdateIssue({ request: { headers: authHeaders } });
-  const approveIssue = useAdminApproveIssue({ request: { headers: authHeaders } });
-  const rejectIssue = useAdminRejectIssue({ request: { headers: authHeaders } });
+  const sessionQ = useAdminSession({ query: { queryKey: ['/api/admin/session'], retry: false } });
+  const authenticated = sessionQ.data?.authenticated === true;
+  const queryConfig = { enabled: authenticated };
+  const sectionsQ = useAdminListSections({ query: { ...queryConfig, queryKey: ['/api/admin/sections'] } });
+  const mappingsQ = useAdminListMappings({ query: { ...queryConfig, queryKey: ['/api/admin/mappings'] } });
+  const issuesQ = useAdminListIssues({ query: { ...queryConfig, queryKey: ['/api/admin/issues'] } });
+  const loginMutation = useAdminLogin();
+  const logoutMutation = useAdminLogout();
+  const updateSection = useAdminUpdateSection();
+  const createMapping = useAdminCreateMapping();
+  const updateMapping = useAdminUpdateMapping();
+  const deleteMapping = useAdminDeleteMapping();
+  const createIssue = useAdminCreateIssue();
+  const updateIssue = useAdminUpdateIssue();
+  const approveIssue = useAdminApproveIssue();
+  const rejectIssue = useAdminRejectIssue();
   const cache = useQueryClient();
   const refreshAdmin = () => {
     void cache.invalidateQueries({ queryKey: ['/api/admin/mappings'] });
     void cache.invalidateQueries({ queryKey: ['/api/admin/issues'] });
     void cache.invalidateQueries({ queryKey: ['/api/admin/sections'] });
   };
-  const login = (e: FormEvent) => { e.preventDefault(); if (!draftPassword.trim()) return; setPassword(draftPassword); sessionStorage.setItem('tax-admin-password', draftPassword); setAdminError(''); };
-  const logout = () => { setPassword(''); sessionStorage.removeItem('tax-admin-password'); setDraftPassword(''); };
+  const login = (e: FormEvent) => {
+    e.preventDefault();
+    if (!draftPassword.trim()) return;
+    loginMutation.mutate({ data: { password: draftPassword } }, {
+      onSuccess: () => {
+        setDraftPassword('');
+        setAdminError('');
+        void cache.invalidateQueries({ queryKey: ['/api/admin/session'] });
+      },
+      onError,
+    });
+  };
+  const logout = () => {
+    logoutMutation.mutate(undefined, {
+      onSuccess: () => {
+        setAdminError('');
+        setDraftPassword('');
+        cache.removeQueries({ predicate: query => String(query.queryKey[0]).startsWith('/api/admin/') });
+        void cache.invalidateQueries({ queryKey: ['/api/admin/session'] });
+      },
+      onError,
+    });
+  };
   const onError = (error: unknown) => { setAdminError(error instanceof Error ? error.message : 'Curation request failed. Verify the admin password and try again.'); };
   const submitSection = (e: FormEvent) => {
     e.preventDefault(); if (!sectionEdit) return;
@@ -336,15 +360,16 @@ function AdminPage() {
 
   return <div className="fade-in">
     <div className="eyebrow">Restricted workspace</div><h1 className="page-title">Curation console</h1><p className="lede">Manage provision records, Act correspondence, and research issues. Changes are sent to the configured admin service.</p>
-    {!password ? <form className="card" style={{ maxWidth: 480, marginTop: 24 }} onSubmit={login}>
+    {sessionQ.isLoading ? <div style={{ marginTop: 24 }}><SkeletonBlock /></div> : !authenticated ? <form className="card" style={{ maxWidth: 480, marginTop: 24 }} onSubmit={login}>
       <div style={{ width: 42, height: 42, borderRadius: 10, background: '#edf3fc', color: '#17306B', display: 'grid', placeItems: 'center' }}><LockKeyhole size={19} /></div>
-      <h2 style={{ fontSize: 18, marginBottom: 6 }}>Admin password required</h2><p className="subtle">The password is sent only as the generated API's X-Admin-Password header and retained for this browser session.</p>
+      <h2 style={{ fontSize: 18, marginBottom: 6 }}>Admin password required</h2><p className="subtle">The password is checked once by the server to start a short-lived, HTTP-only session. It is not retained in browser storage.</p>
       <label className="field-label" htmlFor="admin-password">Password</label><input type="password" autoComplete="current-password" className="control" id="admin-password" value={draftPassword} onChange={e => setDraftPassword(e.target.value)} data-testid="input-admin-password" />
+      {sessionQ.isError && sessionQ.error.status !== 401 && <p className="subtle" style={{ color: '#C0392B' }} role="alert">{sessionQ.error.message}</p>}
       {adminError && <p className="subtle" style={{ color: '#C0392B' }} role="alert">{adminError}</p>}
-      <button className="btn btn-primary" style={{ marginTop: 16 }} type="submit" data-testid="button-admin-login">Unlock curation</button>
+      <button className="btn btn-primary" style={{ marginTop: 16 }} type="submit" disabled={loginMutation.isPending} data-testid="button-admin-login">{loginMutation.isPending ? 'Checking…' : 'Unlock curation'}</button>
     </form> : <>
       <div className="card" style={{ marginTop: 24, padding: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-        <div className="subtle"><ShieldCheck size={15} style={{ verticalAlign: 'middle', marginRight: 7 }} />Authenticated for this browser session</div><button className="btn btn-outline" onClick={logout} data-testid="button-admin-logout">Lock console</button>
+        <div className="subtle"><ShieldCheck size={15} style={{ verticalAlign: 'middle', marginRight: 7 }} />Authenticated with a short-lived server session</div><button className="btn btn-outline" onClick={logout} disabled={logoutMutation.isPending} data-testid="button-admin-logout">Lock console</button>
       </div>
       {adminError && <div style={{ marginTop: 12 }}><LoadError message={adminError} retry={() => { setAdminError(''); refreshAdmin(); }} /></div>}
       <div style={{ display: 'flex', gap: 8, margin: '18px 0', flexWrap: 'wrap' }}>

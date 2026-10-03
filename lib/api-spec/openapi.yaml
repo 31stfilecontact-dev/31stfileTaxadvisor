@@ -179,6 +179,8 @@ paths:
       operationId: adminSession
       tags: [admin]
       summary: Check the current admin session
+      security:
+        - AdminSessionCookie: []
       responses:
         "200":
           description: Admin session is valid
@@ -195,6 +197,8 @@ paths:
       operationId: adminListSections
       tags: [admin]
       summary: List all sections for review
+      security:
+        - AdminSessionCookie: []
       responses:
         "200":
           description: All sections
@@ -205,11 +209,13 @@ paths:
                 items:
                   $ref: "#/components/schemas/Section"
         "401":
-          description: Admin password is missing or incorrect
+          description: Admin session is missing or expired
     patch:
       operationId: adminUpdateSection
       tags: [admin]
       summary: Correct section details
+      security:
+        - AdminSessionCookie: []
       requestBody:
         required: true
         content:
@@ -224,12 +230,14 @@ paths:
               schema:
                 $ref: "#/components/schemas/Section"
         "401":
-          description: Admin password is missing or incorrect
+          description: Admin session is missing or expired
   /admin/mappings:
     get:
       operationId: adminListMappings
       tags: [admin]
       summary: List all section mappings for review
+      security:
+        - AdminSessionCookie: []
       responses:
         "200":
           description: All section mappings
@@ -240,11 +248,13 @@ paths:
                 items:
                   $ref: "#/components/schemas/SectionMapping"
         "401":
-          description: Admin password is missing or incorrect
+          description: Admin session is missing or expired
     post:
       operationId: adminCreateMapping
       tags: [admin]
       summary: Add an official section mapping
+      security:
+        - AdminSessionCookie: []
       requestBody:
         required: true
         content:
@@ -259,12 +269,14 @@ paths:
               schema:
                 $ref: "#/components/schemas/SectionMapping"
         "401":
-          description: Admin password is missing or incorrect
+          description: Admin session is missing or expired
   /admin/mappings/{mapping_id}:
     patch:
       operationId: adminUpdateMapping
       tags: [admin]
       summary: Correct an official section mapping
+      security:
+        - AdminSessionCookie: []
       parameters:
         - name: mapping_id
           in: path
@@ -285,11 +297,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/SectionMapping"
         "401":
-          description: Admin password is missing or incorrect
+          description: Admin session is missing or expired
     delete:
       operationId: adminDeleteMapping
       tags: [admin]
       summary: Remove an incorrect mapping
+      security:
+        - AdminSessionCookie: []
       parameters:
         - name: mapping_id
           in: path
@@ -300,12 +314,14 @@ paths:
         "204":
           description: Mapping removed
         "401":
-          description: Admin password is missing or incorrect
+          description: Admin session is missing or expired
   /admin/issues:
     get:
       operationId: adminListIssues
       tags: [admin]
       summary: List issues including suggested and rejected issues
+      security:
+        - AdminSessionCookie: []
       responses:
         "200":
           description: All issues
@@ -316,11 +332,13 @@ paths:
                 items:
                   $ref: "#/components/schemas/Issue"
         "401":
-          description: Admin password is missing or incorrect
+          description: Admin session is missing or expired
     post:
       operationId: adminCreateIssue
       tags: [admin]
       summary: Add an issue and its search keywords
+      security:
+        - AdminSessionCookie: []
       requestBody:
         required: true
         content:
@@ -335,12 +353,14 @@ paths:
               schema:
                 $ref: "#/components/schemas/Issue"
         "401":
-          description: Admin password is missing or incorrect
+          description: Admin session is missing or expired
   /admin/issues/{issue_id}:
     patch:
       operationId: adminUpdateIssue
       tags: [admin]
       summary: Edit issue details and its Kanoon keywords
+      security:
+        - AdminSessionCookie: []
       parameters:
         - name: issue_id
           in: path
@@ -361,12 +381,14 @@ paths:
               schema:
                 $ref: "#/components/schemas/Issue"
         "401":
-          description: Admin password is missing or incorrect
+          description: Admin session is missing or expired
   /admin/issues/{issue_id}/approve:
     post:
       operationId: adminApproveIssue
       tags: [admin]
       summary: Approve a curated issue for research
+      security:
+        - AdminSessionCookie: []
       parameters:
         - name: issue_id
           in: path
@@ -381,12 +403,14 @@ paths:
               schema:
                 $ref: "#/components/schemas/Issue"
         "401":
-          description: Admin password is missing or incorrect
+          description: Admin session is missing or expired
   /admin/issues/{issue_id}/reject:
     post:
       operationId: adminRejectIssue
       tags: [admin]
       summary: Reject an issue from research
+      security:
+        - AdminSessionCookie: []
       parameters:
         - name: issue_id
           in: path
@@ -401,8 +425,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/Issue"
         "401":
-          description: Admin password is missing or incorrect
+          description: Admin session is missing or expired
 components:
+  securitySchemes:
+    AdminSessionCookie:
+      type: apiKey
+      in: cookie
+      name: tax_admin_session
   schemas:
     HealthStatus:
       type: object

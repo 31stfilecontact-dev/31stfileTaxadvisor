@@ -5,7 +5,7 @@ This app retrieves Indian direct-tax sections, official 1961/2025 section corres
 ## Configure
 
 1. Set `NEON_DATABASE_URL` to the external Neon PostgreSQL connection string. The app deliberately ignores `DATABASE_URL` so a platform-managed database cannot be selected accidentally. Use `NEON_DATABASE_URL` in local and Docker environments too.
-2. Set `KANOON_API_TOKEN` and `ADMIN_PASSWORD` as server-side secrets. Never use a `VITE_` prefix for secrets.
+2. Set `KANOON_API_TOKEN`, `ADMIN_PASSWORD`, and `SESSION_SECRET` as server-side secrets. Never use a `VITE_` prefix for secrets. The admin password is only used to create a short-lived HTTP-only session cookie; it is not retained in browser storage.
 3. Copy `.env.example` to `.env` for local development. It contains variable names only.
 4. Install the Python dependencies with `uv sync`.
 5. Apply the schema and load any official data:
@@ -42,6 +42,7 @@ docker run --rm -p 8000:8000 \
   -e NEON_DATABASE_URL="$NEON_DATABASE_URL" \
   -e KANOON_API_TOKEN="$KANOON_API_TOKEN" \
   -e ADMIN_PASSWORD="$ADMIN_PASSWORD" \
+  -e SESSION_SECRET="$SESSION_SECRET" \
   31stfile-tax-position-advisor
 ```
 
