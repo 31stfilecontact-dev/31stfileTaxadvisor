@@ -166,6 +166,7 @@ function AdvisorPage() {
       <div className="eyebrow">01 / Select the governing provision</div>
       <h2 style={{ margin: '7px 0 5px', fontSize: 19 }}>Choose a section under either Act</h2>
       <p className="subtle" style={{ marginTop: 0 }}>The official correspondence shown below is a research aid. It does not determine the applicable law.</p>
+      {!oldSections.length && !newSections.length && <div className="placeholder-tile subtle" style={{ marginTop: 16 }} role="status" data-testid="text-no-official-sections">No verified section data has been loaded for either Act yet. Add official source data before beginning research.</div>}
       <div className="section-grid" style={{ marginTop: 20 }}>
         {[1961, 2025].map((act) => {
           const actYear = act as 1961 | 2025;

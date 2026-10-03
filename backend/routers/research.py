@@ -1,5 +1,3 @@
-from typing import Literal
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
@@ -21,9 +19,15 @@ router = APIRouter(prefix="/api", tags=["research"])
 
 @router.get("/sections", response_model=list[SectionOut])
 def list_sections(
-    act: Literal[1961, 2025] = Query(...),
+    act: int = Query(
+        ...,
+        description="Income-tax Act year. Supported values: 1961 and 2025.",
+        json_schema_extra={"enum": [1961, 2025]},
+    ),
     db: Session = Depends(get_db),
 ) -> list[SectionOut]:
+    if act not in {1961, 2025}:
+        raise HTTPException(status_code=422, detail="Act must be 1961 or 2025.")
     act_row = db.query(Act).filter(Act.year == act).first()
     if not act_row:
         return []

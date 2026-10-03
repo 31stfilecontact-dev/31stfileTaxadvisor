@@ -3,7 +3,7 @@ from pathlib import Path
 import sys
 
 from alembic import context
-from sqlalchemy import engine_from_config, pool
+from sqlalchemy import create_engine, pool
 from sqlalchemy.engine import make_url
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -43,13 +43,7 @@ def run_migrations_online() -> None:
     url = make_url(settings.database_url)
     if url.drivername in {"postgres", "postgresql"}:
         url = url.set(drivername="postgresql+psycopg")
-    section = config.get_section(config.config_ini_section) or {}
-    section["sqlalchemy.url"] = str(url).replace("%", "%%")
-    connectable = engine_from_config(
-        section,
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-    )
+    connectable = create_engine(url, poolclass=pool.NullPool)
     with connectable.connect() as connection:
         context.configure(
             connection=connection,

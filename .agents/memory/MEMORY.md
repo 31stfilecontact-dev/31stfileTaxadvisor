@@ -1,0 +1,1 @@
+- [External migration URLs](external-migration-urls.md) — Keep PostgreSQL secrets as URL objects; manual percent escaping through config can alter credentials.
