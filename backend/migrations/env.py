@@ -22,7 +22,7 @@ target_metadata = Base.metadata
 
 def run_migrations_offline() -> None:
     if not settings.database_url:
-        raise RuntimeError("Set NEON_DATABASE_URL or DATABASE_URL before running migrations.")
+        raise RuntimeError("Set NEON_DATABASE_URL before running migrations.")
     url = make_url(settings.database_url)
     if url.drivername in {"postgres", "postgresql"}:
         url = url.set(drivername="postgresql+psycopg")
@@ -39,7 +39,7 @@ def run_migrations_offline() -> None:
 
 def run_migrations_online() -> None:
     if not settings.database_url:
-        raise RuntimeError("Set NEON_DATABASE_URL or DATABASE_URL before running migrations.")
+        raise RuntimeError("Set NEON_DATABASE_URL before running migrations.")
     url = make_url(settings.database_url)
     if url.drivername in {"postgres", "postgresql"}:
         url = url.set(drivername="postgresql+psycopg")

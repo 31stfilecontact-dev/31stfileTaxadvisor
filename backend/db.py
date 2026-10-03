@@ -18,7 +18,7 @@ def database_url() -> str:
             status_code=503,
             detail=(
                 "PostgreSQL is not configured. Set NEON_DATABASE_URL to the "
-                "Neon connection string, or DATABASE_URL outside Replit."
+                "external Neon connection string."
             ),
         )
     return settings.database_url
