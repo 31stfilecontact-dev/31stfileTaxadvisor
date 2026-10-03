@@ -186,6 +186,7 @@ class Analysis(Base):
     old_section_id: Mapped[str | None] = mapped_column(ForeignKey("sections.id"))
     new_section_id: Mapped[str | None] = mapped_column(ForeignKey("sections.id"))
     issue_id: Mapped[str | None] = mapped_column(ForeignKey("issues.id"))
+    owner_user_id: Mapped[str | None] = mapped_column(String(255), index=True)
     facts: Mapped[str] = mapped_column(Text, nullable=False)
     result_json: Mapped[dict] = mapped_column(JSONB, nullable=False)
     feedback: Mapped[dict | None] = mapped_column(JSONB)

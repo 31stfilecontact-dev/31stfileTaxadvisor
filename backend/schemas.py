@@ -145,3 +145,7 @@ class AdminLoginInput(BaseModel):
 
 class AdminSessionOut(BaseModel):
     authenticated: bool
+
+
+class TeamSessionOut(BaseModel):
+    authenticated: bool

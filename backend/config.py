@@ -15,6 +15,8 @@ class Settings:
     database_url: str | None
     admin_password: str | None
     session_secret: str | None
+    clerk_secret_key: str | None
+    team_email_allowlist: str | None
     kanoon_api_token: str | None
     kanoon_api_base_url: str
     kanoon_max_api_calls_per_request: int
@@ -37,6 +39,8 @@ def get_settings() -> Settings:
         database_url=os.getenv("NEON_DATABASE_URL"),
         admin_password=os.getenv("ADMIN_PASSWORD"),
         session_secret=os.getenv("SESSION_SECRET"),
+        clerk_secret_key=os.getenv("CLERK_SECRET_KEY"),
+        team_email_allowlist=os.getenv("TEAM_EMAIL_ALLOWLIST"),
         kanoon_api_token=os.getenv("KANOON_API_TOKEN"),
         kanoon_api_base_url=os.getenv(
             "KANOON_API_BASE_URL", "https://api.indiankanoon.org"

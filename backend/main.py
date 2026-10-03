@@ -2,7 +2,7 @@
 
 from fastapi import FastAPI
 
-from backend.routers import admin, health, research
+from backend.routers import admin, auth, health, research
 
 app = FastAPI(
     title="31stFile Tax Position Advisor API",
@@ -17,5 +17,6 @@ app = FastAPI(
 )
 
 app.include_router(health.router)
+app.include_router(auth.router)
 app.include_router(research.router)
 app.include_router(admin.router)

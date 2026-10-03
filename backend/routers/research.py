@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from backend.auth import TeamMember, get_current_member
 from backend.db import get_db
 from backend.models import Act, Circular, Issue, Section, SectionMap
 from backend.presenters import circular_out, issue_out, mapping_out, section_out
@@ -14,7 +15,11 @@ from backend.schemas import (
 )
 from backend.services.search import search_authorities
 
-router = APIRouter(prefix="/api", tags=["research"])
+router = APIRouter(
+    prefix="/api",
+    tags=["research"],
+    dependencies=[Depends(get_current_member)],
+)
 
 
 @router.get("/sections", response_model=list[SectionOut])
@@ -99,5 +104,6 @@ def list_circulars(
 def search(
     payload: SearchInput,
     db: Session = Depends(get_db),
+    member: TeamMember = Depends(get_current_member),
 ) -> SearchResult:
-    return search_authorities(db, payload)
+    return search_authorities(db, payload, owner_user_id=member.user_id)

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 
+from backend.auth import get_current_member
 from backend.db import get_db
 from backend.models import Act, Issue, Section, SectionMap
 from backend.presenters import issue_out, mapping_out, section_out
@@ -16,7 +17,11 @@ from backend.schemas import (
 )
 from backend.security import clear_admin_session, create_admin_session, require_admin
 
-router = APIRouter(prefix="/api/admin", tags=["admin"])
+router = APIRouter(
+    prefix="/api/admin",
+    tags=["admin"],
+    dependencies=[Depends(get_current_member)],
+)
 
 
 @router.post("/login", response_model=AdminSessionOut)

@@ -250,7 +250,9 @@ def _relevant_circulars(
     )
 
 
-def search_authorities(db: Session, request: SearchInput) -> SearchResult:
+def search_authorities(
+    db: Session, request: SearchInput, owner_user_id: str
+) -> SearchResult:
     if not settings.kanoon_api_token:
         raise HTTPException(
             status_code=503,
@@ -445,6 +447,7 @@ def search_authorities(db: Session, request: SearchInput) -> SearchResult:
             old_section_id=old_section_id,
             new_section_id=new_section_id,
             issue_id=issue.id if issue else None,
+            owner_user_id=owner_user_id,
             facts=request.facts,
             result_json=stored_result,
         )
